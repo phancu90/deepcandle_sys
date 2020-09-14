@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'page',
     'accounts',
+    'django_filters',
+
 ]
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
@@ -101,8 +103,8 @@ WSGI_APPLICATION = 'deepcandle.wsgi.application'
 DATABASES = {
      'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'db_deepcandles',
-        'USER': 'acc_dc',
+        'NAME': 'db_deepcandle',
+        'USER': 'acc_sys',
         'PASSWORD': 'pc2020',
         'HOST': 'localhost',
         'PORT': '3306',

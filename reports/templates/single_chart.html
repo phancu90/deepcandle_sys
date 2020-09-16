@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>REPORTS</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <style>
+        .fakeimg {
+            height: 200px;
+            background: #aaa;
+        }
+    </style>
+    <script type="text/javascript" src="https://canvasjs.com/assets/script/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="https://canvasjs.com/assets/script/jquery.canvasjs.min.js"></script>
+</head>
+<body>
+
+<div class="jumbotron text-center" style="margin-bottom:0">
+    <h1>REPORTS MAX HIGH LOW</h1>
+
+</div>
+
+<div class="container" style="margin-top:30px">
+    <div class="row">
+        <div class="col-sm-12">
+            <form action="" method="POST">
+                {% csrf_token %}
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Symbol         </span>
+                            </div>
+                            <select name="symbol" id="symbol" class="input-sm form-control" required>
+                                {% for group,list_symbols in SYMBOLS %}
+                                    <optgroup label="{{ group }}">
+                                        {% for sy in list_symbols %}
+                                            <option {% if sy == request.POST.symbol %} selected {% endif %} value="{{ sy }}">{{ sy.upper }}</option>
+                                        {% endfor %}
+                                    </optgroup>
+                                {% endfor %}
+
+                            </select>
+                            <input type="hidden" name="group"
+                                   value="{% if request.POST.group %}{{ request.POST.group }}{% else %}FX Majors{% endif %}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group ">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Time Frame         </span>
+                            </div>
+                            <select name="time_frame" id="time_frame" class="input-sm form-control" required="">
+                                <option {% if 'h1' == request.POST.time_frame %} selected {% endif %}  value="h1">H1</option>
+                                <option {% if 'm1' == request.POST.time_frame %} selected {% endif %}  value="m1">M1</option>
+                                <option {% if 'm5' == request.POST.time_frame %} selected {% endif %}  value="m5">M5</option>
+                                <option {% if 'm15' == request.POST.time_frame %} selected {% endif %}  value="m5">M15</option>
+                                <option {% if 'h4' == request.POST.time_frame %} selected {% endif %} value="h4">H4</option>
+                                <option {% if 'd1' == request.POST.time_frame %} selected {% endif %}  value="d1">D1</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3" id="year_select" style="display: {% if 'm1' == request.POST.year or 'm5' == request.POST.year %} none {% endif %}block">
+                        <div class="input-group ">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Year         </span>
+                            </div>
+                            <select name="years" id="years" class="input-sm form-control" required>
+                                {% for year in years %}
+                                    <option {% if year == request.POST.year %} selected {% endif %} value="{{ year }}">{{ year }}</option>
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group ">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">STEP         </span>
+                            </div>
+                            <input name="step" id="step" value="{% if request.POST.step %}{{ request.POST.step }}{% else %}10{% endif %}" class="input-sm form-control"
+                                   required="">
+
+                        </div>
+                    </div>
+                    <div class="clearfix"></div>
+
+
+                </div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary">Reports</button>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+        <div class="col-md-12">
+
+            <div id="chartContainer" style="height: 500px; width: 100%;"></div>
+            <div class="col-md-3">
+                <button type="button" onclick="export_csv()" id="export_csv" data="" class="btn btn-primary">Exports <span class="badge badge-danger"></span></button>
+            </div>
+            <script type="text/javascript">
+                data_candles = JSON.parse('{{ data_candle|safe }}')
+                console.log(data_candles['data_10']);
+                var chartContainer = new CanvasJS.Chart("chartContainer", {
+                    title: {
+                        text: "Chart {{ request.GET.symbol }} {{ request.GET.time_frame }}",
+
+                        fontSize: 24
+                    },
+                    axisY: {
+                        title: "Products in %"
+                    },
+                    legend: {
+                        verticalAlign: "center",
+                        horizontalAlign: "right"
+                    },
+                    data: [{
+                        type: "pie",
+                        startAngle: 45,
+                        click: onClick,
+                        showInLegend: "true",
+                        legendText: "{label}",
+                        indexLabel: "{label} ({y})",
+                        yValueFormatString: "#,##0.#" % "",
+                        dataPoints: [
+                            {% for ind2,x in data_report.items %}
+                                {label: '{{ ind2 }}', y: {{ x }}},
+                            {% endfor %}
+                        ]
+                    }]
+                });
+                chartContainer.render()
+
+                function onClick(e) {
+                    $('#export_csv').attr('data', e.dataPoint.label)
+                    $('#export_csv span').text('Data ' + e.dataPoint.label)
+                }
+            </script>
+
+        </div>
+    </div>
+</div>
+<script>
+    function export_csv(e) {
+        index_c = document.getElementById('export_csv').getAttribute('data')
+        _Data_CSV1 = data_candles[index_c]
+        if (_Data_CSV1.length === 0) {
+            return false
+        }
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += 'DATETIME,TP ,PRICE_CLOSE, PRICE_HIGH,PRICE_LOW,PRICE_OPEN,TICK_VOLUME' + "\r\n";
+        _Data_CSV1.forEach(function (rowArray) {
+            let row = rowArray.join(",");
+            csvContent += row + "\r\n";
+        });
+
+        var encodedUri = encodeURI(csvContent);
+        var link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", new Date().getTime() + "_list_candles_1.csv");
+        document.body.appendChild(link); // Required for FF
+        link.click();
+
+    }
+
+    function download(data) {
+        var headers = {
+            DATETIME: 'DATETIME', // remove commas to avoid errors
+            PRICE_CLOSE: "PRICE_CLOSE",
+            PRICE_HIGH: "PRICE_HIGH",
+            PRICE_LOW: "PRICE_LOW",
+            PRICE_OPEN: "PRICE_OPEN",
+            TICK_VOLUME: "TICK_VOLUME"
+        };
+
+        itemsNotFormatted = [
+            {
+                model: 'Samsung S7',
+                chargers: '55',
+                cases: '56',
+                earphones: '57',
+                scratched: '2'
+            },
+            {
+                model: 'Pixel XL',
+                chargers: '77',
+                cases: '78',
+                earphones: '79',
+                scratched: '4'
+            },
+            {
+                model: 'iPhone 7',
+                chargers: '88',
+                cases: '89',
+                earphones: '90',
+                scratched: '6'
+            }
+        ];
+
+        var itemsFormatted = [];
+
+        // format the data
+        data.forEach((item) => {
+            itemsFormatted.push({
+                DATETIME: item.DATETIME, // remove commas to avoid errors
+                PRICE_CLOSE: item.PRICE_CLOSE,
+                PRICE_HIGH: item.PRICE_HIGH,
+                PRICE_LOW: item.PRICE_LOW,
+                PRICE_OPEN: item.PRICE_OPEN,
+                TICK_VOLUME: item.TICK_VOLUME
+            });
+        });
+
+        var fileTitle = 'candles'; // or 'my-unique-title'
+
+        exportCSVFile(headers, itemsFormatted, fileTitle); // call the exportCSVFile() function to process the JSON and trigger the download
+    }
+
+    $(document).ready(function () {
+        $('#symbol').on('change', function () {
+            var label = $(this.options[this.selectedIndex]).closest('optgroup').prop('label');
+            $('#symbol').next().val(label)
+        });
+        $('#time_frame').on('change', function () {
+            var time_Frame = $(this.options[this.selectedIndex]).val();
+            if (time_Frame === 'm1' || time_Frame === 'm5') {
+                $('#year_select').show()
+
+            } else {
+                $('#year_select').hide()
+
+            }
+        });
+    });
+
+</script>
+
+</body>
+</html>

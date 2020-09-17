@@ -1,3 +1,4 @@
 pip install django
 pip install pandas
 pip install numpy
+install csv
